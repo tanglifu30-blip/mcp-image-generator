@@ -1,5 +1,40 @@
 # 更新日志
 
+## [1.2.0] - 2026-10-30 🌍 跨平台兼容性更新
+
+### ✨ 新增功能
+- 🔌 **通用MCP客户端支持**
+  - 兼容Cursor IDE
+  - 兼容Windsurf IDE
+  - 兼容VS Code + Cline
+  - 兼容Continue.dev
+  - 兼容Zed Editor
+  - 支持所有标准MCP协议客户端
+
+- 🌍 **跨平台配置**
+  - 环境变量配置支持 (推荐方式)
+  - .env文件支持 (`.env.example`模板)
+  - 自动检测用户目录 (Windows/macOS/Linux)
+  - 配置优先级: 环境变量 > .env > JSON文件
+
+- 📖 **完整文档**
+  - 新增`MCP_CLIENTS.md` - 详细的客户端配置指南
+  - 各工具的配置示例
+  - 跨平台路径处理说明
+  - 故障排查指南
+
+### 🔧 改进
+- 📁 存储路径自动适配操作系统
+  - Windows: `%USERPROFILE%\claude-images`
+  - macOS/Linux: `~/claude-images`
+- 🛡️ 更安全的.gitignore配置
+- 🏷️ 增强的package.json关键词
+
+### 🐛 修复
+- 修复硬编码的Windows路径问题
+- 优化错误提示信息
+- 改进配置加载逻辑
+
 ## [1.1.0] - 2026-10-29 🚨 P0 级更新 + 模型优化
 
 ### 🎯 重大改进

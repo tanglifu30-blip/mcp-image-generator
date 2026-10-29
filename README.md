@@ -3,8 +3,12 @@
 [![MCP](https://img.shields.io/badge/MCP-Compatible-blue)](https://modelcontextprotocol.io)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green)](https://nodejs.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Cross--Platform-orange)]()
 
-基于 NewAPI 兼容端点的 MCP 图像生成服务器，为 Claude Code 提供强大的 AI 绘图能力。支持文生图、图生图编辑和变体生成三种模式。
+基于 NewAPI 兼容端点的 MCP 图像生成服务器,支持**所有标准MCP客户端**。提供文生图、图生图编辑和变体生成三种模式。
+
+> 🌍 **跨平台支持**: Windows / macOS / Linux  
+> 🔌 **通用兼容**: Claude Code / Cursor / Windsurf / Cline / Continue / Zed 等
 
 ## 功能特性
 
@@ -40,36 +44,77 @@ npm install
 
 ## 配置
 
-### 1. API 配置文件
-创建 `A:\生图apikey.txt`：
+支持三种配置方式,任选其一:
+
+### 方式1: 环境变量 (推荐 - 跨工具通用)
+
+```bash
+# Windows PowerShell
+$env:OPENAI_API_KEY="sk-your-key-here"
+$env:OPENAI_API_BASE="https://your-api-endpoint.com"
+
+# macOS/Linux
+export OPENAI_API_KEY="sk-your-key-here"
+export OPENAI_API_BASE="https://your-api-endpoint.com"
+```
+
+### 方式2: .env文件 (适合开发)
+
+复制`.env.example`为`.env`,填入配置:
+
+```bash
+cp .env.example .env
+# 编辑.env文件
+```
+
+### 方式3: JSON配置文件 (传统方式)
+
+创建 `~/生图apikey.txt` (或自定义路径):
+
 ```json
 {
-  "_type": "newapi_channel_conn",
-  "key": "sk-your-api-key-here",
+  "key": "sk-your-key-here",
   "url": "https://your-api-endpoint.com"
 }
 ```
 
-### 2. Claude Code 配置
-编辑 `C:\Users\TempAdmin\.claude\config.json`：
+---
+
+## 在MCP客户端中使用
+
+### Claude Code 配置
+
+编辑 `~/.claude/config.json`:
+
 ```json
 {
   "mcpServers": {
-    "hermes": {
+    "image-generator": {
       "command": "node",
-      "args": [
-        "A:\\Claude-code\\Claude\\mcp-servers\\image-generator\\index.js"
-      ],
+      "args": ["/path/to/mcp-image-generator/index.js"],
       "env": {
-        "NODE_ENV": "production"
+        "OPENAI_API_KEY": "sk-your-key-here",
+        "OPENAI_API_BASE": "https://your-api-endpoint.com"
       }
     }
   }
 }
 ```
 
-### 3. 存储目录
-图片默认保存到 `A:\Claude使用image出图`，会自动创建。
+### 其他客户端 (Cursor / Windsurf / Cline)
+
+查看详细配置: **[MCP客户端配置指南](MCP_CLIENTS.md)**
+
+支持的客户端:
+- ✅ Claude Code (CLI / Desktop / Web)
+- ✅ Cursor IDE
+- ✅ Windsurf IDE  
+- ✅ VS Code + Cline
+- ✅ Continue.dev
+- ✅ Zed Editor
+- ✅ 所有标准MCP客户端
+
+---
 
 ## 使用示例
 

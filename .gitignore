@@ -1,14 +1,42 @@
+# 依赖
 node_modules/
-*.log
+
+# 环境变量配置 (包含API密钥)
 .env
-.DS_Store
+.env.local
+.env.*.local
+
+# API配置文件
+*apikey*.txt
+*apikey*.json
+生图apikey.txt
+
+# 日志
+*.log
+npm-debug.log*
+yarn-debug.log*
 
 # 测试文件
 test-*.js
 *.backup
+*.test.png
+*.test.json
 
 # 生成的图片和元数据
 generated/
+test-output/
 
 # 临时文件
-*.txt
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini

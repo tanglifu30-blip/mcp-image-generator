@@ -10,26 +10,48 @@ import fs from 'fs/promises';
 import path from 'path';
 import { createHash } from 'crypto';
 import { fileURLToPath } from 'url';
+import { config as dotenvConfig } from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const API_CONFIG_PATH = 'A:\\生图apikey.txt';
-const STORAGE_ROOT = 'A:\\Claude使用image出图';
+// 加载.env文件
+dotenvConfig();
+
+// 配置优先级: 环境变量 > .env文件 > API配置文件
+const API_CONFIG_PATH = process.env.API_CONFIG_PATH || path.join(process.env.USERPROFILE || process.env.HOME || '.', '生图apikey.txt');
+const STORAGE_ROOT = process.env.IMAGE_STORAGE_PATH || process.env.USERPROFILE
+  ? path.join(process.env.USERPROFILE, 'claude-images')
+  : path.join(process.env.HOME || '.', 'claude-images');
 const INDEX_FILE = path.join(STORAGE_ROOT, 'index.json');
 const COST_LOG_FILE = path.join(STORAGE_ROOT, 'cost-log.json');
 
-// 读取 API 配置
+// 读取 API 配置 - 支持多种配置方式
 async function loadApiConfig() {
+  // 优先使用环境变量
+  if (process.env.OPENAI_API_KEY) {
+    return {
+      apiKey: process.env.OPENAI_API_KEY,
+      baseUrl: process.env.OPENAI_API_BASE || 'https://api.openai.com',
+    };
+  }
+
+  // 尝试读取配置文件
   try {
     const content = await fs.readFile(API_CONFIG_PATH, 'utf-8');
     const config = JSON.parse(content);
     return {
       apiKey: config.key,
-      baseUrl: config.url,
+      baseUrl: config.url || 'https://api.openai.com',
     };
   } catch (error) {
-    throw new Error(`Failed to load API config from ${API_CONFIG_PATH}: ${error.message}`);
+    throw new Error(
+      `API配置未找到！请使用以下任一方式配置:\n` +
+      `1. 设置环境变量: OPENAI_API_KEY 和 OPENAI_API_BASE\n` +
+      `2. 创建.env文件 (参考.env.example)\n` +
+      `3. 创建配置文件: ${API_CONFIG_PATH}\n` +
+      `错误详情: ${error.message}`
+    );
   }
 }
 
