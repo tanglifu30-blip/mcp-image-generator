@@ -37,9 +37,28 @@
 
 ## 安装
 
+### 快速安装 (推荐)
+
+```bash
+# 克隆仓库
+git clone https://github.com/tanglifu30-blip/mcp-image-generator.git
+cd mcp-image-generator
+
+# Windows
+./setup.ps1
+
+# macOS/Linux
+chmod +x setup.sh
+./setup.sh
+```
+
+### 手动安装
+
 ```bash
 cd mcp-servers/image-generator
 npm install
+cp .env.example .env
+# 编辑.env文件,填入你的API密钥
 ```
 
 ## 配置
