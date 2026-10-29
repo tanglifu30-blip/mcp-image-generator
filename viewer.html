@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图片浏览器 - Claude Image Generator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    header {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 { font-size: 24px; margin-bottom: 10px; color: #333; }
+    .subtitle { color: #666; font-size: 14px; }
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    input[type="text"], input[type="month"], select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button {
+      padding: 8px 16px;
+      background: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover { background: #0052a3; }
+    .stats {
+      margin-top: 15px;
+      padding: 10px;
+      background: #f0f7ff;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #0066cc;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-4px); }
+    .card img {
+      width: 100%;
+      height: 280px;
+      object-fit: cover;
+      cursor: pointer;
+    }
+    .card-content {
+      padding: 15px;
+    }
+    .prompt {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 10px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .tag {
+      padding: 4px 8px;
+      background: #e7f3ff;
+      color: #0066cc;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .meta {
+      font-size: 12px;
+      color: #999;
+      display: flex;
+      justify-content: space-between;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      max-width: 90%;
+      max-height: 90%;
+    }
+    .modal img {
+      max-width: 100%;
+      max-height: 90vh;
+      object-fit: contain;
+    }
+    .close {
+      position: absolute;
+      top: 20px;
+      right: 40px;
+      color: white;
+      font-size: 40px;
+      cursor: pointer;
+    }
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎨 Claude 图片浏览器</h1>
+    <p class="subtitle">浏览和搜索所有 AI 生成的图片</p>
+
+    <div class="filters">
+      <input type="text" id="keyword" placeholder="搜索提示词关键词...">
+      <input type="text" id="tags" placeholder="标签（逗号分隔）">
+      <input type="month" id="month">
+      <select id="tool">
+        <option value="">所有工具</option>
+        <option value="generate_image">文生图</option>
+        <option value="edit_image">图生图编辑</option>
+        <option value="create_variation">图生图变体</option>
+      </select>
+      <button onclick="loadImages()">搜索</button>
+      <button onclick="clearFilters()">清除</button>
+    </div>
+
+    <div class="stats" id="stats">请先加载图片索引</div>
+  </header>
+
+  <div class="gallery" id="gallery"></div>
+
+  <div id="modal" class="modal" onclick="closeModal()">
+    <span class="close">&times;</span>
+    <div class="modal-content">
+      <img id="modalImg">
+    </div>
+  </div>
+
+  <script>
+    let allImages = [];
+
+    async function loadIndex() {
+      try {
+        const response = await fetch('file:///A:/Claude使用image出图/index.json');
+        allImages = await response.json();
+        document.getElementById('stats').textContent = `共 ${allImages.length} 张图片`;
+        return allImages;
+      } catch (error) {
+        document.getElementById('stats').textContent = '索引文件不存在或无法读取';
+        console.error(error);
+        return [];
+      }
+    }
+
+    function filterImages() {
+      const keyword = document.getElementById('keyword').value.toLowerCase();
+      const tagsInput = document.getElementById('tags').value.toLowerCase();
+      const month = document.getElementById('month').value;
+      const tool = document.getElementById('tool').value;
+
+      let filtered = allImages;
+
+      if (keyword) {
+        filtered = filtered.filter(img =>
+          img.prompt && img.prompt.toLowerCase().includes(keyword)
+        );
+      }
+
+      if (tagsInput) {
+        const tags = tagsInput.split(',').map(t => t.trim()).filter(t => t);
+        filtered = filtered.filter(img =>
+          tags.every(tag => img.tags && img.tags.includes(tag))
+        );
+      }
+
+      if (month) {
+        filtered = filtered.filter(img =>
+          img.created_at && img.created_at.startsWith(month)
+        );
+      }
+
+      if (tool) {
+        filtered = filtered.filter(img => img.tool === tool);
+      }
+
+      return filtered.reverse(); // 最新的在前
+    }
+
+    function renderGallery(images) {
+      const gallery = document.getElementById('gallery');
+
+      if (images.length === 0) {
+        gallery.innerHTML = '<div class="empty">没有找到图片</div>';
+        return;
+      }
+
+      gallery.innerHTML = images.map(img => `
+        <div class="card">
+          <img src="file:///${img.path.replace(/\\/g, '/')}"
+               onclick="openModal('${img.path.replace(/\\/g, '/')}')"
+               onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiPueEoeazleWKoOi9vTwvdGV4dD48L3N2Zz4='">
+          <div class="card-content">
+            <div class="prompt">${img.prompt || '无提示词'}</div>
+            <div class="tags">
+              ${(img.tags || []).slice(0, 5).map(tag =>
+                `<span class="tag">${tag}</span>`
+              ).join('')}
+            </div>
+            <div class="meta">
+              <span>${img.tool === 'generate_image' ? '文生图' :
+                      img.tool === 'edit_image' ? '图编辑' : '变体'}</span>
+              <span>${new Date(img.created_at).toLocaleDateString('zh-CN')}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('stats').textContent =
+        `共 ${allImages.length} 张图片，显示 ${images.length} 张`;
+    }
+
+    async function loadImages() {
+      if (allImages.length === 0) {
+        await loadIndex();
+      }
+      const filtered = filterImages();
+      renderGallery(filtered);
+    }
+
+    function clearFilters() {
+      document.getElementById('keyword').value = '';
+      document.getElementById('tags').value = '';
+      document.getElementById('month').value = '';
+      document.getElementById('tool').value = '';
+      renderGallery(allImages.slice().reverse());
+    }
+
+    function openModal(path) {
+      document.getElementById('modal').style.display = 'flex';
+      document.getElementById('modalImg').src = 'file:///' + path;
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    // 初始加载
+    loadIndex().then(images => {
+      if (images.length > 0) {
+        renderGallery(images.slice().reverse());
+      }
+    });
+  </script>
+</body>
+</html>

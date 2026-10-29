@@ -1,0 +1,14 @@
+node_modules/
+*.log
+.env
+.DS_Store
+
+# 测试文件
+test-*.js
+*.backup
+
+# 生成的图片和元数据
+generated/
+
+# 临时文件
+*.txt
